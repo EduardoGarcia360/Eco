@@ -39,6 +39,7 @@ public class Ventana extends JFrame implements ActionListener {
 	LinkedList<Double> precios = new LinkedList<Double>();
 	LinkedList<Double> ingreso_total_IT = new LinkedList<Double>();
 	LinkedList<Double> ingreso_marginal_IMG = new LinkedList<Double>();
+	LinkedList<Double> costo_total = new LinkedList<Double>();
 
 	/**
 	 * Launch the application.
@@ -189,6 +190,7 @@ public class Ventana extends JFrame implements ActionListener {
 				if(esnumero(m) && esnumero(b) && esnumero(c) && esnumero(d) && esnumero(e) && esnumero(f)){
 					//YA TENEMOS LOS VALORES NUMERICOS INGRESADOS
 					Nm = Integer.parseInt(m);
+					//Nm = Double.parseDouble(m);
 					Nb = Integer.parseInt(b);
 					Nc = Integer.parseInt(c);
 					int tmp = Integer.parseInt(d);
@@ -200,8 +202,9 @@ public class Ventana extends JFrame implements ActionListener {
 					int Xfinal = x_cero(Nb,Nm) + 10, pos = 1;
 					XYSeries demanda = new XYSeries("Demanda");
 					XYSeries img_ingreso_marginal = new XYSeries("Ingreso Marginal");
+					XYSeries costo_medio_CME = new XYSeries("Costo Medio");
 					
-					double img=0;
+					double img=0, ct=0,cmedio=0;
 					for (int x = 0; x < Xfinal; x+=10)
 					{
 						Nprecios = funcion_demanda_precio(x,Nm,Nb);
@@ -211,10 +214,19 @@ public class Ventana extends JFrame implements ActionListener {
 						ingreso_total(x,Nprecios);
 						//AGREGAMOS A LA GRAFICA DE DEMANDA
 						demanda.add((double)x,Nprecios);
+						//CALCULAMOS COSTO TOTAL
+						ct = funcion_CT(x,Nc,Nd,Ne,Nf);
+						
+						//AGREGAMOS A LA LISTA DE COSTO TOTAL
+						costo_total.add(ct);
 						if(x>=10){
 							
 							//CALCULAMOS EL IMG
 							img = ingreso_marginal(pos);
+							//CALCULAMOS EL COSTO MEDIO
+							cmedio = costo_medio(pos,x);
+							//AGREGAMOS A LA GRAFICA DE COSTO MEDIO
+							costo_medio_CME.add(x,cmedio);
 							if(img > 0){
 								img_ingreso_marginal.add(x,img);
 								pos++;
@@ -230,6 +242,8 @@ public class Ventana extends JFrame implements ActionListener {
 					XYSeriesCollection dataset = new XYSeriesCollection();
 					dataset.addSeries(demanda);
 					dataset.addSeries(img_ingreso_marginal);
+					dataset.addSeries(costo_medio_CME);
+					
 					chart = ChartFactory.createXYLineChart(
 							"", //TITULO
 							"Eje X: Cantidades", //NOMBRE EJE X
@@ -269,10 +283,12 @@ public class Ventana extends JFrame implements ActionListener {
 		ingreso_total_IT.add(it);
 	}
 	
+	private double costo_medio(int posicion, int x){
+		return ( (costo_total.get(posicion))/(x) );
+	}
+	
 	private double ingreso_marginal(int posicion){
 		//ingreso_marginal_IMG.add(0.0);
-		double t = (ingreso_total_IT.get(posicion) - ingreso_total_IT.get(posicion-1))/(10);
-		System.out.println(t);
 		return ((ingreso_total_IT.get(posicion) - ingreso_total_IT.get(posicion-1))/(10));
 		
 		
