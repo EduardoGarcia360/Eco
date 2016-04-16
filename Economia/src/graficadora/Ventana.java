@@ -199,6 +199,8 @@ public class Ventana extends JFrame implements ActionListener {
 					
 					int Xfinal = x_cero(Nb,Nm) + 10, pos = 1;
 					XYSeries demanda = new XYSeries("Demanda");
+					XYSeries img_ingreso_marginal = new XYSeries("Ingreso Marginal");
+					
 					double img=0;
 					for (int x = 0; x < Xfinal; x+=10)
 					{
@@ -207,26 +209,23 @@ public class Ventana extends JFrame implements ActionListener {
 						precios.add(Nprecios);
 						//AGREGAMOS A LA LISTA DE INGRESO TOTAL
 						ingreso_total(x,Nprecios);
-						if(x>=10){
-							img = ingreso_marginal()
-						}
+						//AGREGAMOS A LA GRAFICA DE DEMANDA
 						demanda.add((double)x,Nprecios);
-					}
-					
-					double cada_diez=0;
-					XYSeries img_ingreso_marginal = new XYSeries("Ingreso Marginal");
-					double dato_img=0;
-					ingreso_marginal(Xfinal);
-					for (int x=0; x<Xfinal; x++){
-						try{
-							dato_img = ingreso_marginal_IMG.get(x);
-							img_ingreso_marginal.add(cada_diez, dato_img);
-							cada_diez+=10;
-						}catch(IndexOutOfBoundsException e){
-							break;
+						if(x>=10){
+							
+							//CALCULAMOS EL IMG
+							img = ingreso_marginal(pos);
+							if(img > 0){
+								img_ingreso_marginal.add(x,img);
+								pos++;
+							}else{
+								break;
+							}
+							
 						}
 						
 					}
+					
 					
 					XYSeriesCollection dataset = new XYSeriesCollection();
 					dataset.addSeries(demanda);
@@ -272,7 +271,8 @@ public class Ventana extends JFrame implements ActionListener {
 	
 	private double ingreso_marginal(int posicion){
 		//ingreso_marginal_IMG.add(0.0);
-		
+		double t = (ingreso_total_IT.get(posicion) - ingreso_total_IT.get(posicion-1))/(10);
+		System.out.println(t);
 		return ((ingreso_total_IT.get(posicion) - ingreso_total_IT.get(posicion-1))/(10));
 		
 		
