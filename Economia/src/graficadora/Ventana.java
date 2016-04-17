@@ -30,9 +30,9 @@ public class Ventana extends JFrame implements ActionListener {
 
 	private JPanel contentPane;
 	private JTextField txtm, txtb, txtc, txtd, txte, txtf;
-	JButton btngenerar;
+	JButton btngenerar, btnGuardar;
 	String m="",b="",c="",d="",e="",f="";
-	int Nm=0, Nb=0, Nc=0, Nd=0, Ne=0, Nf=0;
+	double Dm=0, Db=0, Dc=0, Dd=0, De=0, Df=0;
 	double Nprecios=0;
 	JPanel Grafica;
 	JFreeChart chart;
@@ -40,6 +40,8 @@ public class Ventana extends JFrame implements ActionListener {
 	LinkedList<Double> ingreso_total_IT = new LinkedList<Double>();
 	LinkedList<Double> ingreso_marginal_IMG = new LinkedList<Double>();
 	LinkedList<Double> costo_total = new LinkedList<Double>();
+	LinkedList<Double> costo_medio_LIST = new LinkedList<Double>();
+	LinkedList<Double> costo_marginal_LIST = new LinkedList<Double>();
 
 	/**
 	 * Launch the application.
@@ -170,6 +172,11 @@ public class Ventana extends JFrame implements ActionListener {
 		Grafica.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.black));
 		contentPane.add(Grafica);
 		
+		btnGuardar = new JButton("Guardar");
+		btnGuardar.addActionListener(this);
+		btnGuardar.setBounds(699, 63, 89, 23);
+		contentPane.add(btnGuardar);
+		
 		
 		
 	}
@@ -189,25 +196,29 @@ public class Ventana extends JFrame implements ActionListener {
 				//SI TIENE ALGO, VERIFICAMOS QUE SEA UN NUMERO
 				if(esnumero(m) && esnumero(b) && esnumero(c) && esnumero(d) && esnumero(e) && esnumero(f)){
 					//YA TENEMOS LOS VALORES NUMERICOS INGRESADOS
-					Nm = Integer.parseInt(m);
-					//Nm = Double.parseDouble(m);
-					Nb = Integer.parseInt(b);
-					Nc = Integer.parseInt(c);
-					int tmp = Integer.parseInt(d);
-					Nd = tmp * (-1);
-					Ne = Integer.parseInt(e);
-					Nf = Integer.parseInt(f);
+					Dm = Double.parseDouble(m);
+					Db = Double.parseDouble(b);
+					Dc = Double.parseDouble(c);
+					double tmp = Double.parseDouble(d);
+					Dd = tmp * (-1);
+					De = Double.parseDouble(e);
+					Df = Double.parseDouble(f);
 					
 					
-					int Xfinal = x_cero(Nb,Nm) + 10, pos = 1;
+					int Xfinal = x_cero(Db,Dm) + 10, pos = 1;
 					XYSeries demanda = new XYSeries("Demanda");
 					XYSeries img_ingreso_marginal = new XYSeries("Ingreso Marginal");
 					XYSeries costo_medio_CME = new XYSeries("Costo Medio");
+					XYSeries costo_marginal_CMG = new XYSeries("Costo Marginal");
 					
-					double img=0, ct=0,cmedio=0;
+					costo_medio_LIST.add(0.0);
+					ingreso_marginal_IMG.add(0.0);
+					costo_marginal_LIST.add(0.0);
+					
+					double img=0, ct=0,cmedio=0, cmarginal=0;
 					for (int x = 0; x < Xfinal; x+=10)
 					{
-						Nprecios = funcion_demanda_precio(x,Nm,Nb);
+						Nprecios = funcion_demanda_precio(x,Dm,Db);
 						//AGREGAMOS A LISTA CON LOS PRECIOS
 						precios.add(Nprecios);
 						//AGREGAMOS A LA LISTA DE INGRESO TOTAL
@@ -215,7 +226,7 @@ public class Ventana extends JFrame implements ActionListener {
 						//AGREGAMOS A LA GRAFICA DE DEMANDA
 						demanda.add((double)x,Nprecios);
 						//CALCULAMOS COSTO TOTAL
-						ct = funcion_CT(x,Nc,Nd,Ne,Nf);
+						ct = funcion_CT(x,Dc,Dd,De,Df);
 						
 						//AGREGAMOS A LA LISTA DE COSTO TOTAL
 						costo_total.add(ct);
@@ -223,8 +234,18 @@ public class Ventana extends JFrame implements ActionListener {
 							
 							//CALCULAMOS EL IMG
 							img = ingreso_marginal(pos);
+							//LO AGREGAMOS A LA LISTA
+							ingreso_marginal_IMG.add(img);
 							//CALCULAMOS EL COSTO MEDIO
 							cmedio = costo_medio(pos,x);
+							//AGREGAMOS COSTO MEDIO A LA LISTA
+							costo_medio_LIST.add(cmedio);
+							//CALCULAMOS COSTO MARGINAL
+							cmarginal = costo_marginal(pos);
+							//AGREGAMOS COSTO MARGINAL A LA LISTA
+							costo_marginal_LIST.add(cmarginal);
+							//AGREGAMOS A LA GRAFICA DE COSTO MARGINAL
+							costo_marginal_CMG.add(x,cmarginal);
 							//AGREGAMOS A LA GRAFICA DE COSTO MEDIO
 							costo_medio_CME.add(x,cmedio);
 							if(img > 0){
@@ -238,11 +259,11 @@ public class Ventana extends JFrame implements ActionListener {
 						
 					}
 					
-					
 					XYSeriesCollection dataset = new XYSeriesCollection();
 					dataset.addSeries(demanda);
 					dataset.addSeries(img_ingreso_marginal);
 					dataset.addSeries(costo_medio_CME);
+					dataset.addSeries(costo_marginal_CMG);
 					
 					chart = ChartFactory.createXYLineChart(
 							"", //TITULO
@@ -266,41 +287,55 @@ public class Ventana extends JFrame implements ActionListener {
 					JOptionPane.showMessageDialog(null, "Debe rellenar todos los campos con valores numericos");
 				}
 			}
+		}else if(ev.getSource() == btnGuardar){
+			Crear_Tabla();
 		}
 	}
 	
-	private int x_cero(int b, int m){
+	public void Crear_Tabla(){
+		Archivo a = new Archivo();
+		String Tabla_contenido = "NUM.PROD-PRECIO-INGRESO.TOTAL-COSTO.TOTAL-COSTO.MEDIO-COSTO.MARGINAL-INGRESO.MARGINAL\n";
+		int cada_diez=0;
+		for(int i=0; i<precios.size(); i++){
+			Tabla_contenido += cada_diez + "-"+precios.get(i) + "-"+ingreso_total_IT.get(i)+"-"+costo_total.get(i)+"-"+costo_medio_LIST.get(i)+"-"+costo_marginal_LIST.get(i)+"-"+ingreso_marginal_IMG.get(i)+"\n";
+			cada_diez+=10;
+		}
+		a.Guardar(Tabla_contenido);
+	}
+	
+	private int x_cero(double b, double m){
 		return( (int)((b/m)*(-1)) );
 	}
 	
-	private double funcion_demanda_precio(int x, int m, int b){
+	private double funcion_demanda_precio(double x, double m, double b){
 		return ( (double)(m*x+b) );
 	}
 	
-	private void ingreso_total(int x, double y){
+	private void ingreso_total(double x, double y){
 		//CANTIDAD POR PRECIO
 		double it = x*y;
 		ingreso_total_IT.add(it);
 	}
 	
-	private double costo_medio(int posicion, int x){
+	private double costo_medio(int posicion, double x){
 		return ( (costo_total.get(posicion))/(x) );
 	}
 	
-	private double ingreso_marginal(int posicion){
-		//ingreso_marginal_IMG.add(0.0);
-		return ((ingreso_total_IT.get(posicion) - ingreso_total_IT.get(posicion-1))/(10));
-		
-		
+	private double costo_marginal(int posicion){
+		return( (costo_total.get(posicion) - costo_total.get(posicion-1))/(10) );
 	}
 	
-	private int funcion_CT(int x, int c, int d, int e, int f){
-		return ( (int)( c*(Math.pow(x, 3)) + d*(Math.pow(x, 2)) + e*x + f ));
+	private double ingreso_marginal(int posicion){
+		return ((ingreso_total_IT.get(posicion) - ingreso_total_IT.get(posicion-1))/(10));
+	}
+	
+	private double funcion_CT(double x, double c, double d, double e, double f){
+		return ( (double)( c*(Math.pow(x, 3)) + d*(Math.pow(x, 2)) + e*x + f ));
 	}
 	
 	private boolean esnumero(String dato){
         try{
-            Integer.parseInt(dato);
+        	Double.parseDouble(dato);
         }catch(NumberFormatException nfe){
             return false;
         }
