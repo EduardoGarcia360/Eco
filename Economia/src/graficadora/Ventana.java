@@ -5,6 +5,9 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.LinkedList;
 
 import javax.swing.JFrame;
@@ -24,18 +27,26 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 
 
 public class Ventana extends JFrame implements ActionListener {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
 	private JTextField txtm, txtb, txtc, txtd, txte, txtf;
-	JButton btngenerar, btnGuardar;
-	String m="",b="",c="",d="",e="",f="";
-	double Dm=0, Db=0, Dc=0, Dd=0, De=0, Df=0;
-	double Nprecios=0;
+	JButton btngenerar, btnGuardar, btnDatos, btnImagen;
+	String m="",b="",c="",d="",e="",f="", Tabla_contenido="", todo="";
+	double Dm=0, Db=0, Dc=0, Dd=0, De=0, Df=0, Nprecios=0;
+	boolean activar_botones=false;
+	int numero_filas=0;
 	JPanel Grafica;
 	JFreeChart chart;
+	DecimalFormat decimal = new DecimalFormat("0.00");
+	Archivo a = new Archivo();
 	LinkedList<Double> precios = new LinkedList<Double>();
 	LinkedList<Double> ingreso_total_IT = new LinkedList<Double>();
 	LinkedList<Double> ingreso_marginal_IMG = new LinkedList<Double>();
@@ -65,7 +76,8 @@ public class Ventana extends JFrame implements ActionListener {
 	 */
 	public Ventana() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 933, 660);
+		setBounds(100, 100, 933, 625);
+		setTitle("Eduardo antonio garcia franco - 2012-12961");
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -164,18 +176,31 @@ public class Ventana extends JFrame implements ActionListener {
 		contentPane.add(lblF_1);
 		
 		JLabel lblFuncionDeCosto = new JLabel("Funcion de Costo Total");
-		lblFuncionDeCosto.setBounds(452, 63, 166, 14);
+		lblFuncionDeCosto.setBounds(356, 63, 166, 14);
 		contentPane.add(lblFuncionDeCosto);
 		
 		Grafica = new JPanel();
-		Grafica.setBounds(10, 102, 897, 433);
+		Grafica.setBounds(10, 102, 897, 462);
 		Grafica.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.black));
 		contentPane.add(Grafica);
 		
-		btnGuardar = new JButton("Guardar");
+		btnGuardar = new JButton("Guardar Datos");
 		btnGuardar.addActionListener(this);
-		btnGuardar.setBounds(699, 63, 89, 23);
+		btnGuardar.setBounds(630, 63, 127, 23);
+		btnGuardar.setEnabled(false);
 		contentPane.add(btnGuardar);
+		
+		btnDatos = new JButton("Ver Datos");
+		btnDatos.addActionListener(this);
+		btnDatos.setBounds(517, 63, 103, 23);
+		btnDatos.setEnabled(false);
+		contentPane.add(btnDatos);
+		
+		btnImagen = new JButton("Guardar Imagen");
+		btnImagen.addActionListener(this);
+		btnImagen.setBounds(762, 63, 133, 23);
+		btnImagen.setEnabled(false);
+		contentPane.add(btnImagen);
 		
 		
 		
@@ -196,111 +221,152 @@ public class Ventana extends JFrame implements ActionListener {
 				//SI TIENE ALGO, VERIFICAMOS QUE SEA UN NUMERO
 				if(esnumero(m) && esnumero(b) && esnumero(c) && esnumero(d) && esnumero(e) && esnumero(f)){
 					//YA TENEMOS LOS VALORES NUMERICOS INGRESADOS
-					Dm = Double.parseDouble(m);
-					Db = Double.parseDouble(b);
-					Dc = Double.parseDouble(c);
-					double tmp = Double.parseDouble(d);
-					Dd = tmp * (-1);
-					De = Double.parseDouble(e);
-					Df = Double.parseDouble(f);
-					
-					
-					int Xfinal = x_cero(Db,Dm) + 10, pos = 1;
-					XYSeries demanda = new XYSeries("Demanda");
-					XYSeries img_ingreso_marginal = new XYSeries("Ingreso Marginal");
-					XYSeries costo_medio_CME = new XYSeries("Costo Medio");
-					XYSeries costo_marginal_CMG = new XYSeries("Costo Marginal");
-					
-					costo_medio_LIST.add(0.0);
-					ingreso_marginal_IMG.add(0.0);
-					costo_marginal_LIST.add(0.0);
-					
-					double img=0, ct=0,cmedio=0, cmarginal=0;
-					for (int x = 0; x < Xfinal; x+=10)
-					{
-						Nprecios = funcion_demanda_precio(x,Dm,Db);
-						//AGREGAMOS A LISTA CON LOS PRECIOS
-						precios.add(Nprecios);
-						//AGREGAMOS A LA LISTA DE INGRESO TOTAL
-						ingreso_total(x,Nprecios);
-						//AGREGAMOS A LA GRAFICA DE DEMANDA
-						demanda.add((double)x,Nprecios);
-						//CALCULAMOS COSTO TOTAL
-						ct = funcion_CT(x,Dc,Dd,De,Df);
-						
-						//AGREGAMOS A LA LISTA DE COSTO TOTAL
-						costo_total.add(ct);
-						if(x>=10){
-							
-							//CALCULAMOS EL IMG
-							img = ingreso_marginal(pos);
-							//LO AGREGAMOS A LA LISTA
-							ingreso_marginal_IMG.add(img);
-							//CALCULAMOS EL COSTO MEDIO
-							cmedio = costo_medio(pos,x);
-							//AGREGAMOS COSTO MEDIO A LA LISTA
-							costo_medio_LIST.add(cmedio);
-							//CALCULAMOS COSTO MARGINAL
-							cmarginal = costo_marginal(pos);
-							//AGREGAMOS COSTO MARGINAL A LA LISTA
-							costo_marginal_LIST.add(cmarginal);
-							//AGREGAMOS A LA GRAFICA DE COSTO MARGINAL
-							costo_marginal_CMG.add(x,cmarginal);
-							//AGREGAMOS A LA GRAFICA DE COSTO MEDIO
-							costo_medio_CME.add(x,cmedio);
-							if(img > 0){
-								img_ingreso_marginal.add(x,img);
-								pos++;
-							}else{
-								break;
-							}
-							
-						}
-						
-					}
-					
-					XYSeriesCollection dataset = new XYSeriesCollection();
-					dataset.addSeries(demanda);
-					dataset.addSeries(img_ingreso_marginal);
-					dataset.addSeries(costo_medio_CME);
-					dataset.addSeries(costo_marginal_CMG);
-					
-					chart = ChartFactory.createXYLineChart(
-							"", //TITULO
-							"Eje X: Cantidades", //NOMBRE EJE X
-							"Eje Y: Demanda en Q.", //NOMBRE EJE Y
-							dataset, //AGREGAMOS EL DATASET
-							PlotOrientation.VERTICAL, //Plot Orientation
-							true, // Show Legend
-							true, // Use tooltips
-							false // Configure chart to generate URLs?
-					);
-					
-					ChartPanel panel = new ChartPanel(chart);
-					
-					Grafica.add(panel);
-					Grafica.setVisible(true);
-					pack();
-					
+					btnGuardar.setEnabled(true);
+					btnDatos.setEnabled(true);
+					btnImagen.setEnabled(true);
+					Generar_Datos();
 				}else{
 					//SI ALGUNO NO ES NUMERO
 					JOptionPane.showMessageDialog(null, "Debe rellenar todos los campos con valores numericos");
 				}
 			}
 		}else if(ev.getSource() == btnGuardar){
-			Crear_Tabla();
+			if(activar_botones){
+				a.Guardar(todo);
+				
+			}else{
+				JOptionPane.showMessageDialog(null, "Debe ingresar los valores antes de guardar algo");
+			}
+		}else if(ev.getSource() == btnDatos){
+			if(activar_botones){
+				
+				Tabladatos td = new Tabladatos(Tabla_contenido, numero_filas);
+				
+			}else{
+				JOptionPane.showMessageDialog(null, "Para generar datos debe ingresar los valores");
+			}
+		}else if(ev.getSource() == btnImagen){
+			JFileChooser fc=new JFileChooser("C:/");
+			fc.setCurrentDirectory(new File("C:/"));
+			fc.setSelectedFile(new File("C:/Grafica.jpg"));
+			int ret=fc.showSaveDialog(null);
+			if(ret==fc.APPROVE_OPTION)
+			{
+			try {
+			ChartUtilities.saveChartAsJPEG(fc.getSelectedFile(), chart, 1220, 720);
+			JOptionPane.showMessageDialog(null, "Guardado con Exito!");
+			} catch (IOException IOe) {
+			JOptionPane.showMessageDialog(null, "Error al guardar la imagen " + IOe.toString());
+			}
+			}
 		}
 	}
 	
+	public void Generar_Datos(){
+		Dm = Double.parseDouble(m);
+		Db = Double.parseDouble(b);
+		Dc = Double.parseDouble(c);
+		double tmp = Double.parseDouble(d);
+		Dd = tmp * (-1);
+		De = Double.parseDouble(e);
+		Df = Double.parseDouble(f);
+		activar_botones = true;
+		
+		int Xfinal = x_cero(Db,Dm) + 10, pos = 1;
+		XYSeries demanda = new XYSeries("Demanda");
+		XYSeries img_ingreso_marginal = new XYSeries("Ingreso Marginal");
+		XYSeries costo_medio_CME = new XYSeries("Costo Medio");
+		XYSeries costo_marginal_CMG = new XYSeries("Costo Marginal");
+		
+		costo_medio_LIST.add(0.0);
+		ingreso_marginal_IMG.add(0.0);
+		costo_marginal_LIST.add(0.0);
+		
+		double img=0, ct=0,cmedio=0, cmarginal=0;
+		for (int x = 0; x < Xfinal; x+=10)
+		{
+			Nprecios = funcion_demanda_precio(x,Dm,Db);
+			//AGREGAMOS A LISTA CON LOS PRECIOS
+			precios.add(Nprecios);
+			//AGREGAMOS A LA LISTA DE INGRESO TOTAL
+			ingreso_total(x,Nprecios);
+			//AGREGAMOS A LA GRAFICA DE DEMANDA
+			demanda.add((double)x,Nprecios);
+			//CALCULAMOS COSTO TOTAL
+			ct = funcion_CT(x,Dc,Dd,De,Df);
+			//AGREGAMOS A LA LISTA DE COSTO TOTAL
+			costo_total.add(ct);
+			numero_filas++;
+			if(x>=10){
+				
+				//CALCULAMOS EL IMG
+				img = ingreso_marginal(pos);
+				//LO AGREGAMOS A LA LISTA
+				ingreso_marginal_IMG.add(img);
+				//CALCULAMOS EL COSTO MEDIO
+				cmedio = costo_medio(pos,x);
+				//AGREGAMOS COSTO MEDIO A LA LISTA
+				costo_medio_LIST.add(cmedio);
+				//CALCULAMOS COSTO MARGINAL
+				cmarginal = costo_marginal(pos);
+				//AGREGAMOS COSTO MARGINAL A LA LISTA
+				costo_marginal_LIST.add(cmarginal);
+				//AGREGAMOS A LA GRAFICA DE COSTO MARGINAL
+				costo_marginal_CMG.add(x,cmarginal);
+				//AGREGAMOS A LA GRAFICA DE COSTO MEDIO
+				costo_medio_CME.add(x,cmedio);
+				
+				if(img > 0){
+					img_ingreso_marginal.add(x,img);
+					pos++;
+				}else{
+					break;
+				}
+				
+			}
+			
+		}
+		XYSeriesCollection dataset = new XYSeriesCollection();
+		dataset.addSeries(demanda);
+		dataset.addSeries(img_ingreso_marginal);
+		dataset.addSeries(costo_medio_CME);
+		dataset.addSeries(costo_marginal_CMG);
+		
+		chart = ChartFactory.createXYLineChart(
+				"", //TITULO
+				"Eje X: Cantidades", //NOMBRE EJE X
+				"Eje Y: Demanda en Q.", //NOMBRE EJE Y
+				dataset, //AGREGAMOS EL DATASET
+				PlotOrientation.VERTICAL, //Plot Orientation
+				true, // Show Legend
+				true, // Use tooltips
+				false // Configure chart to generate URLs?
+		);
+		
+		ChartPanel panel = new ChartPanel(chart);
+		
+		Grafica.add(panel);
+		Grafica.setVisible(true);
+		pack();
+		
+		Crear_Tabla();
+	}
+	
 	public void Crear_Tabla(){
-		Archivo a = new Archivo();
-		String Tabla_contenido = "NUM.PROD-PRECIO-INGRESO.TOTAL-COSTO.TOTAL-COSTO.MEDIO-COSTO.MARGINAL-INGRESO.MARGINAL\n";
+		
+		todo = "Ecuacion de la demanda: y= " + Dm + "x + (" + Db + ")\n"
+				+ "Ecuacion de Costo Total: CT= ("+ Dc + ")x^3 + (" + Dd + ")x^2 + (" + De + ")x + (" + Df + ")\n"
+				+ "NP\tPRECIO\tING TOT\t\tCTOTAL\t\tCMEDIO\t\tCMARGINAL\tINGRESO MARGINAL\n";
+		//Tabla_contenido = "NP\tPRECIO\tING TOT\t\tCTOTAL\t\tCMEDIO\t\tCMARGINAL\tINGRESO MARGINAL\n";
 		int cada_diez=0;
 		for(int i=0; i<precios.size(); i++){
-			Tabla_contenido += cada_diez + "-"+precios.get(i) + "-"+ingreso_total_IT.get(i)+"-"+costo_total.get(i)+"-"+costo_medio_LIST.get(i)+"-"+costo_marginal_LIST.get(i)+"-"+ingreso_marginal_IMG.get(i)+"\n";
+			Tabla_contenido += cada_diez + "\t"+decimal.format(precios.get(i)) + "\t"+decimal.format(ingreso_total_IT.get(i))+"\t"
+					+decimal.format(costo_total.get(i))+"\t"+decimal.format(costo_medio_LIST.get(i))
+					+"\t"+decimal.format(costo_marginal_LIST.get(i))+"\t"+decimal.format(ingreso_marginal_IMG.get(i))+"\t\n";
 			cada_diez+=10;
 		}
-		a.Guardar(Tabla_contenido);
+		todo += Tabla_contenido;
+		
 	}
 	
 	private int x_cero(double b, double m){

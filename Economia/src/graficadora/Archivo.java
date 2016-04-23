@@ -1,31 +1,34 @@
 package graficadora;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
 
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 
 public class Archivo {
 	
-	
-	
 	public void Guardar(String texto){
-		File archi = new File("DatosGrafica.eco");
-		JFileChooser FC = new JFileChooser("C:\\Users\\Edu\\Desktop\\");
-		try {
-			FileWriter escritor = new FileWriter(archi);
-			BufferedWriter bw = new BufferedWriter(escritor);
-			PrintWriter salida = new PrintWriter(bw);
-			salida.write(texto);
-			salida.close();
-			bw.close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		JFileChooser FC = new JFileChooser();
+		int s = FC.showSaveDialog(null);
+        try{
+            if (s == JFileChooser.APPROVE_OPTION){
+                File JFC = FC.getSelectedFile();
+                String ruta = JFC.getAbsolutePath();
+                PrintWriter printwriter = new PrintWriter(JFC);
+                printwriter.print(texto);
+                printwriter.close();
+                
+                if( !(ruta.endsWith(".eco")) ){
+                	File temp = new File(ruta+".eco");
+                    JFC.renameTo(temp);
+                }
+                	JOptionPane.showMessageDialog(null, "Guardado Correctamente","Notificacion", JOptionPane.INFORMATION_MESSAGE);
+                
+            }
+        }catch (Exception e){
+            JOptionPane.showMessageDialog(null,"Error al guardar", "Notificacion", JOptionPane.ERROR_MESSAGE);
+        }
 	}
 
 }
