@@ -53,10 +53,10 @@ public class Ventana extends JFrame implements ActionListener {
 	LinkedList<Double> costo_total = new LinkedList<Double>();
 	LinkedList<Double> costo_medio_LIST = new LinkedList<Double>();
 	LinkedList<Double> costo_marginal_LIST = new LinkedList<Double>();
-
-	/**
-	 * Launch the application.
-	 */
+	
+	//XYSeries demanda = new XYSeries("Demanda");
+	//XYSeriesCollection dataset = new XYSeriesCollection();
+	
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -70,10 +70,7 @@ public class Ventana extends JFrame implements ActionListener {
 			}
 		});
 	}
-
-	/**
-	 * Create the frame.
-	 */
+	
 	public Ventana() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 933, 625);
@@ -202,8 +199,6 @@ public class Ventana extends JFrame implements ActionListener {
 		btnImagen.setEnabled(false);
 		contentPane.add(btnImagen);
 		
-		
-		
 	}
 	
 	public void actionPerformed(ActionEvent ev){
@@ -224,7 +219,9 @@ public class Ventana extends JFrame implements ActionListener {
 					btnGuardar.setEnabled(true);
 					btnDatos.setEnabled(true);
 					btnImagen.setEnabled(true);
-					Generar_Datos();
+					//Generar_Datos();
+					generar_demanda gd = new generar_demanda();
+					gd.start();
 				}else{
 					//SI ALGUNO NO ES NUMERO
 					JOptionPane.showMessageDialog(null, "Debe rellenar todos los campos con valores numericos");
@@ -233,15 +230,12 @@ public class Ventana extends JFrame implements ActionListener {
 		}else if(ev.getSource() == btnGuardar){
 			if(activar_botones){
 				a.Guardar(todo);
-				
 			}else{
 				JOptionPane.showMessageDialog(null, "Debe ingresar los valores antes de guardar algo");
 			}
 		}else if(ev.getSource() == btnDatos){
 			if(activar_botones){
-				
 				Tabladatos td = new Tabladatos(Tabla_contenido, numero_filas);
-				
 			}else{
 				JOptionPane.showMessageDialog(null, "Para generar datos debe ingresar los valores");
 			}
@@ -344,7 +338,9 @@ public class Ventana extends JFrame implements ActionListener {
 		);
 		
 		ChartPanel panel = new ChartPanel(chart);
-		
+		if(activar_botones){
+			Grafica.removeAll();
+		}
 		Grafica.add(panel);
 		Grafica.setVisible(true);
 		pack();
@@ -367,6 +363,63 @@ public class Ventana extends JFrame implements ActionListener {
 		}
 		todo += Tabla_contenido;
 		
+	}
+	
+	private class generar_demanda extends Thread{
+		
+		public void run(){
+			int i=0, j=10;
+			Dm = Double.parseDouble(m);
+			Db = Double.parseDouble(b);
+			double losprecios=0;
+			//XYSeries nueva_demanda = new XYSeries("Demanda");
+			//XYSeriesCollection datos_demanda = new XYSeriesCollection();
+			JFreeChart fc;
+			while(i<17){
+				XYSeries nueva_demanda = new XYSeries("Demanda");
+				for(int x=0; x<j; x++){
+					losprecios = funcion_demanda_precio(x,Dm,Db);
+					nueva_demanda.add((double)x,losprecios);
+				}
+				XYSeriesCollection datos_demanda = new XYSeriesCollection();
+				datos_demanda.addSeries(nueva_demanda);
+				i++;
+				j+=10;
+				try{
+					
+					fc = ChartFactory.createXYLineChart(
+							"", //TITULO
+							"Eje X: Cantidades", //NOMBRE EJE X
+							"Eje Y: Demanda en Q.", //NOMBRE EJE Y
+							datos_demanda, //AGREGAMOS EL XYSERIESCOLLECTION
+							PlotOrientation.VERTICAL, //Plot Orientation
+							true, // Show Legend
+							true, // Use tooltips
+							false // Configure chart to generate URLs?
+					);
+					
+					ChartPanel panel = new ChartPanel(fc);
+					
+					Grafica.removeAll();
+					Grafica.add(panel);
+					Grafica.setVisible(true);
+					pack();
+					Thread.sleep(1000);
+					
+				}catch(InterruptedException e) {
+					System.out.println("Error!: " + e.toString());
+				}
+			}//fin while
+			generar_ingreso_marginal im = new generar_ingreso_marginal();
+			im.start();
+		}//fin run
+		
+	}
+	
+	private class generar_ingreso_marginal extends Thread{
+		public void run(){
+			
+		}
 	}
 	
 	private int x_cero(double b, double m){
