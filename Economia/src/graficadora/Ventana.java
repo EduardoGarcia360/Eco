@@ -279,34 +279,47 @@ public class Ventana extends JFrame implements ActionListener {
 		double img=0, ct=0,cmedio=0, cmarginal=0;
 		for (int x = 0; x < Xfinal; x+=10)
 		{
+			//CALCULAMOS LOS PRECIOS
 			Nprecios = funcion_demanda_precio(x,Dm,Db);
+			
 			//AGREGAMOS A LISTA CON LOS PRECIOS
 			precios.add(Nprecios);
-			//AGREGAMOS A LA LISTA DE INGRESO TOTAL
+			
+			//AGREGAMOS A LA LISTA DE INGRESO TOTAL MEDIANTE EL METODO
 			ingreso_total(x,Nprecios);
+			
 			//AGREGAMOS A LA GRAFICA DE DEMANDA
 			demanda.add((double)x,Nprecios);
+			
 			//CALCULAMOS COSTO TOTAL
 			ct = funcion_CT(x,Dc,Dd,De,Df);
+			
 			//AGREGAMOS A LA LISTA DE COSTO TOTAL
 			costo_total.add(ct);
+			
 			numero_filas++;
 			if(x>=10){
-				
 				//CALCULAMOS EL IMG
 				img = ingreso_marginal(pos);
+				
 				//LO AGREGAMOS A LA LISTA
 				ingreso_marginal_IMG.add(img);
+				
 				//CALCULAMOS EL COSTO MEDIO
 				cmedio = costo_medio(pos,x);
+				
 				//AGREGAMOS COSTO MEDIO A LA LISTA
 				costo_medio_LIST.add(cmedio);
+				
 				//CALCULAMOS COSTO MARGINAL
 				cmarginal = costo_marginal(pos);
+				
 				//AGREGAMOS COSTO MARGINAL A LA LISTA
 				costo_marginal_LIST.add(cmarginal);
+				
 				//AGREGAMOS A LA GRAFICA DE COSTO MARGINAL
 				costo_marginal_CMG.add(x,cmarginal);
+				
 				//AGREGAMOS A LA GRAFICA DE COSTO MEDIO
 				costo_medio_CME.add(x,cmedio);
 				
@@ -368,18 +381,23 @@ public class Ventana extends JFrame implements ActionListener {
 	private class generar_demanda extends Thread{
 		
 		public void run(){
-			int i=0, j=10;
+			int i=0, j=20;
 			Dm = Double.parseDouble(m);
 			Db = Double.parseDouble(b);
 			double losprecios=0;
-			//XYSeries nueva_demanda = new XYSeries("Demanda");
-			//XYSeriesCollection datos_demanda = new XYSeriesCollection();
 			JFreeChart fc;
 			while(i<17){
+				ingreso_total_IT.clear();
 				XYSeries nueva_demanda = new XYSeries("Demanda");
-				for(int x=0; x<j; x++){
+				for(int x=0; x<j; x+=10){
+					//CALCULAR DEMANDA
 					losprecios = funcion_demanda_precio(x,Dm,Db);
+					
+					//AGREGAR DEMANDA A LA GRAFICA
 					nueva_demanda.add((double)x,losprecios);
+					
+					//AGREGAR A LA LISTA DE INGRESO TOTAL MEDIANTE EL METODO
+					ingreso_total(x,losprecios);
 				}
 				XYSeriesCollection datos_demanda = new XYSeriesCollection();
 				datos_demanda.addSeries(nueva_demanda);
@@ -418,6 +436,62 @@ public class Ventana extends JFrame implements ActionListener {
 	
 	private class generar_ingreso_marginal extends Thread{
 		public void run(){
+			Grafica.removeAll();
+			int i=0, j=35;
+			int Xfinal = x_cero(Db,Dm) + 10;
+			ingreso_marginal_IMG.add(0.0);
+			double img=0;
+			JFreeChart fc;
+			
+			while(i<17){
+				int pos=1;
+				XYSeries nuevo_im = new XYSeries("Ingreso Marginal");
+				for(int x=5; x<j; x+=10){
+					//CALCULAMOS EL INGRESO MARGINAL
+					img = ingreso_marginal(pos);
+					System.out.println("x: "+ x+ " y: "+img);
+					if(img > 0){
+						//AGREGAMOS EL VALOR A LA LISTA
+						//ingreso_marginal_IMG.add(img);
+						
+						//AGREGAMOS LA COORDENADA A LA GRAFICA
+						nuevo_im.add(x,img);
+						pos++;
+					}else{
+						i+=20;
+						break;
+					}
+				}//FIN FOR
+				System.out.println("----------------------------------");
+				i++;
+				j+=35;
+				XYSeriesCollection datos_im = new XYSeriesCollection();
+				datos_im.addSeries(nuevo_im);
+				fc = ChartFactory.createXYLineChart(
+						"", //TITULO
+						"Eje X: Cantidades", //NOMBRE EJE X
+						"Eje Y: Demanda en Q.", //NOMBRE EJE Y
+						datos_im, //AGREGAMOS EL XYSERIESCOLLECTION
+						PlotOrientation.VERTICAL, //Plot Orientation
+						true, // Show Legend
+						true, // Use tooltips
+						false // Configure chart to generate URLs?
+				);
+				
+				ChartPanel panel = new ChartPanel(fc);
+				
+				Grafica.removeAll();
+				Grafica.add(panel);
+				Grafica.setVisible(true);
+				pack();
+				
+				try{
+				Thread.sleep(1000);
+				}catch(InterruptedException e) {
+					System.out.println("Error!: " + e.toString());
+				}
+				
+			}//FIN WHILE
 			
 		}
 	}
